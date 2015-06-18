@@ -65,31 +65,61 @@ static inline void nano_wait(uint32_t sec, uint32_t nsec)
 void randomizeBodies(Body *data, int n) {
   int i;
   // Hard code first 2 stars as 'mega-stars'
-  data[0].x = 384.0;
-  data[0].y = 192.0;
-  data[0].z = 50.0;
+  /*data[0].x = 384.0;
+  data[0].y = 384.0;
+  data[0].z = 384.0;
   data[0].vx = 0.0;
   data[0].vy = 0.0;
   data[0].vz = 0.0;
-  data[0].m = 5000000.0;
+  data[0].m = 900000000.0;
   data[0].im = 1.0 / data[0].m;
   data[1].x = 640.0;
-  data[1].y = 576.0;
-  data[1].z = 50.0;
+  data[1].y = 384.0;
+  data[1].z = 384.0;
   data[1].vx = 0.0;
   data[1].vy = 0.0;
   data[1].vz = 0.0;
-  data[1].m = 5000000.0;
-  data[1].im = 1.0 / data[1].m;
-  for (i = 2; i < n; i++) {
-    data[i].x = 1024.0f * (rand() / (float)RAND_MAX) - 1.0f;
-    data[i].y = 768.0f * (rand() / (float)RAND_MAX) - 1.0f;
-    data[i].z = (float) (rand() % 101);
-    data[i].vx = (rand() % 41) - 20.0f;
-    data[i].vy = (rand() % 41) - 20.0f;
-    data[i].vz = (rand() % 41) - 20.0f;
-    data[i].m = 50.0f;
-    data[i].im = 1.0 / data[i].m;
+  data[1].m = 900000000.0;
+  data[1].im = 1.0 / data[1].m;*/
+  data[0].x = 512.0;
+  data[0].y = 384.0;
+  data[0].z = 200.0;
+  data[0].vx = 0.0;
+  data[0].vy = 0.0;
+  data[0].vz = 0.0;
+  data[0].m = 50000000.0;
+  data[0].im = 1.0 / data[0].m;
+  for (i = 1; i < n; i++) {
+  /*  if(i == 1){
+      data[i].x = 303.575623;
+      data[i].y = 599.325623;
+      data[i].z = 183.000000;
+      data[i].vx = 2.000000;
+      data[i].vy = -9.000000;
+      data[i].vz = 18.000000;
+      data[i].m = 100.000000;
+      data[i].im = 1.0 / data[i].m;
+    }
+    else if(i == 2){
+      data[i].x = 148.797012;
+      data[i].y = 151.768005;
+      data[i].z = 293.000000;
+      data[i].vx = 11.000000;
+      data[i].vy = -20.000000;
+      data[i].vz = -2.000000;
+      data[i].m = 100.000000;
+      data[i].im = 1.0 / data[i].m;
+    }
+    else{*/
+      data[i].x = 1024.0f * (rand() / (float)RAND_MAX) - 1.0f;
+      data[i].y = 768.0f * (rand() / (float)RAND_MAX) - 1.0f;
+      data[i].z = (float) (rand() % 768);
+      data[i].vx = (rand() % 41) - 20.0f;
+      data[i].vy = (rand() % 41) - 20.0f;
+      data[i].vz = (rand() % 41) - 20.0f;
+      data[i].m = 100.0f;
+      data[i].im = 1.0 / data[i].m;
+    //}
   }
 }
 
@@ -106,6 +136,7 @@ int main(int argc, char *argv[])
 	int i, x, y;
         int res;
         unsigned int *fp;
+
 
        fb = open(FB, O_RDWR);
 
@@ -167,8 +198,6 @@ int main(int argc, char *argv[])
     	for (row = 0; row < platform.rows; row++){
       		for (col = 0; col < platform.cols; col++){
 			e_write(&dev, row, col, 0x00000004, &nBodies, sizeof(int));
-	// No longer needed, not suming on ARM any more
-	//		e_write(&dev, row, col, 0x1000, (Body *) buf, sizeof(Body) * nBodies);
       		}
     	}
 	e_write(&dev, 0, 0, 0x1000, (Body *) buf, sizeof(Body) * nBodies);
@@ -195,15 +224,15 @@ int main(int argc, char *argv[])
       				break;
     			}
   		}
+		e_read(&dev, 0, 0, 0x1000, (Body *) bufOutput, sizeof(Body) * nBodies);
 		if(x != 0){
-			draw_stars(bufOutput, nBodies, fp, stride, 0x00000000);
+			draw_stars(buf, nBodies, fp, stride, 0x00000000);
 		}
 		else{
 			x = 1;
 		}
-		e_read(&dev, 0, 0, 0x1000, (Body *) bufOutput, sizeof(Body) * nBodies);
 		draw_stars(bufOutput, nBodies, fp, stride, 0x00ffffff);
-		//fprintf(stderr, "buf[0].x = %f\n", bufOutput[0].x);
+		memcpy(buf, bufOutput, sizeof(Body) * nBodies);
 	}
 	e_close(&dev);
 
@@ -218,14 +247,11 @@ void draw_stars(Body* bufOutput, int nBodies, unsigned int *fp, int stride, int 
 {
 	int y, s_x, s_y, s_z;
 	for (y = 0; y < nBodies; y++){
-		/*s_x = (int) (bufOutput[y].x * 2.5);
-		s_y = (int) (bufOutput[y].y * 2.5);
-		s_z = (int) (bufOutput[y].z * 2.5);*/
 		s_x = (int) (bufOutput[y].x);
 		s_y = (int) (bufOutput[y].y);
 		s_z = (int) (bufOutput[y].z);
 		if(s_x >= 0 && s_x < 1024 && s_y >= 0 && s_y < 768){
-			if(y < 2){
+			if(y < 1){
        				fp[s_x + s_y * stride] = (color == 0x00000000 ? color : 0x00ff0000);
 				if(s_x > 0)
        					fp[(s_x - 1) + s_y * stride] = (color == 0x00000000 ? color : 0x00ff0000);
@@ -264,15 +290,7 @@ void draw_stars(Body* bufOutput, int nBodies, unsigned int *fp, int stride, int 
 					else{
              					fp[s_x + s_y * stride] = 0x00ffffff;
 					}*/
-					if(bufOutput[y].vz < -25.0){
-             					fp[s_x + s_y * stride] = 0x000000ff;
-					}
-					else if(bufOutput[y].vz > 25.0){
-             					fp[s_x + s_y * stride] = 0x00ff0000;
-					}
-					else{
-             					fp[s_x + s_y * stride] = 0x00ffffff;
-					}
+             				fp[s_x + s_y * stride] = 0x00ffffff;
 				}
 		}
 	}

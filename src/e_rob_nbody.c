@@ -43,6 +43,7 @@ typedef struct {
 
 void sync_isr(int);
 
+
 int main(void) {
 	e_coreid_t coreid;
 	unsigned row, col, *done;
